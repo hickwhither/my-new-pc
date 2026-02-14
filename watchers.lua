@@ -12,22 +12,26 @@ function Watchers.Init(services, state, config, utils, visuals, safe, ui)
         if obj:IsA("Beam") then return end
 
         local objName = obj.Name or "Unknown"
+        local lowerName = string.lower(objName)
         local roomSuffix = roomNumber and (" [P." .. roomNumber .. "]") or ""
 
-        if objName == "Pandemonium" and state.pandemoniumIgnore then
+        if state.pandemoniumIgnore and string.find(lowerName, "pandemonium") then
             obj:Destroy()
             return
         end
-        if objName == "Abomination" and state.abominationIgnore then
+        if state.abominationIgnore and string.find(lowerName, "abomination") then
             obj:Destroy()
             return
         end
 
         local breakTarget
-        if config.DANGEROUS_ENTITY_NAMES[objName] then
-            state.dangerousParts[obj] = true
-            visuals.addVisuals(obj, "Enemy", objName)
-            breakTarget = obj
+        for dangerousName, _ in pairs(config.DANGEROUS_ENTITY_NAMES) do
+            if string.find(lowerName, string.lower(dangerousName), 1, true) then
+                state.dangerousParts[obj] = true
+                visuals.addVisuals(obj, "Enemy", objName)
+                breakTarget = obj
+                break
+            end
         end
 
         if objName == "Locker" then
