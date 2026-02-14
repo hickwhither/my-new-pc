@@ -66,38 +66,35 @@ end
 
 -- Heartbeat monitor
 local heartbeatConn
-function Safe.StartHeartbeat()
-    if heartbeatConn then return end
 
-    heartbeatConn = RunService.Heartbeat:Connect(function()
-        if not _G.state.running then return end
+heartbeatConn = RunService.Heartbeat:Connect(function()
+    if not _G.state.running then return end
 
-        local dangerList = {}
-        for part, active in pairs(_G.state.dangerousParts) do
-            if active and part and part.Parent then
-                table.insert(dangerList, part.Name)
-            end
+    local dangerList = {}
+    for part, active in pairs(_G.state.dangerousParts) do
+        if active and part and part.Parent then
+            table.insert(dangerList, part.Name)
         end
+    end
 
-        local UI = _G.UI
-        if UI and UI.setWarningText then
-            if #dangerList > 0 then
-                UI.setWarningText(
-                    "danger",
-                    "⚠️ NGUY HIỂM: " .. table.concat(dangerList, ", ")
-                )
-            else
-                UI.setWarningText("danger", nil)
-            end
-        end
-
-        if _G.state.settings.safeHeightEnabled and #dangerList > 0 then
-            Safe.toggleSafeMode(true)
+    local UI = _G.UI
+    if UI and UI.setWarningText then
+        if #dangerList > 0 then
+            UI.setWarningText(
+                "danger",
+                "⚠️ NGUY HIỂM: " .. table.concat(dangerList, ", ")
+            )
         else
-            Safe.toggleSafeMode(false)
+            UI.setWarningText("danger", nil)
         end
-    end)
+    end
 
-    table.insert(_G.state.connections, heartbeatConn)
-end
+    if _G.state.settings.safeHeightEnabled and #dangerList > 0 then
+        Safe.toggleSafeMode(true)
+    else
+        Safe.toggleSafeMode(false)
+    end
+end)
+
+table.insert(_G.state.connections, heartbeatConn)
 

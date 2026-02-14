@@ -120,9 +120,7 @@ function UI.createButton(name, color)
         return UI.buttons[name]
     end
 
-    local isToggle = _G.state
-        and _G.state.settings
-        and _G.state.settings[name] ~= nil
+    local isToggle = _G.state.settings[name] ~= nil
 
     local function getDisplayText()
         if isToggle then

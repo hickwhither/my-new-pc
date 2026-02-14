@@ -18,8 +18,13 @@ function Teleport.teleportToNextDoor()
     local root = char and char:FindFirstChild("HumanoidRootPart")
     if not root then return end
 
-    local watcher = _G.Watcher
-    local targetDoor = watcher.latestDoor
+    -- Kill text
+    task.spawn(function()
+        task.wait(2)
+        _G.UI.setWarningText("teleport")
+    end)
+
+    local targetDoor = _G.Watcher.latestDoor
 
     if not targetDoor or not targetDoor.Parent then
         warn("❌ Không tìm thấy latestDoor.")
@@ -56,11 +61,5 @@ function Teleport.teleportToNextDoor()
         _G.UI.setWarningText("teleport", nil)
     end
     print("🚀 Đã dịch chuyển tới cửa mới nhất.")
-
-    -- Kill text
-    task.spawn(function()
-        task.wait(2)
-        _G.UI.setWarningText("teleport")
-    end)
 end
 

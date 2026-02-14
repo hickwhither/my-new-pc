@@ -14,15 +14,6 @@ local function processObject(obj, roomNumber)
     local lowerName = string.lower(objName)
     local roomSuffix = roomNumber and (" [P." .. roomNumber .. "]") or ""
 
-    if _G.state.pandemoniumIgnore and string.find(lowerName, "pandemonium") then
-        obj:Destroy()
-        return
-    end
-    if _G.state.abominationIgnore and string.find(lowerName, "abomination") then
-        obj:Destroy()
-        return
-    end
-
     local breakTarget
     for dangerousName, _ in pairs(_G.config.DANGEROUS_ENTITY_NAMES) do
         if string.find(lowerName, string.lower(dangerousName), 1, true) then
@@ -146,49 +137,61 @@ end)
     table.insert(_G.state.connections, descRemoving)
 end
 
-local function watchRooms(roomsFolder)
-    local function registerRoom(room)
-        local roomNumber = _G.Utils.getRoomNumber(room)
-        for _, obj in ipairs(room:GetDescendants()) do
-            pcall(function() processObject(obj, roomNumber) end)
-        end
+Watcher.latestDoor = nil
+Watcher.latestRoomNumber = -math.huge
 
-        local entrances = room:WaitForChild("Entrances", 10)
-        if not entrances then
-            warn("No Entrances in room:", room)
-            return
-        end
-
-        for _, door in ipairs(entrances:GetChildren()) do
-            if door:IsA("Model") or door:IsA("BasePart") then
-                local numStr = roomNumber and tostring(roomNumber) or "?"
-                _G.Visuals.addVisuals(door, "Item", "Door [".. numStr .."]")
-            end
-        end
-
-        local doorConn = entrances.ChildAdded:Connect(function(door)
-            task.wait(0.1)
-            if door:IsA("Model") or door:IsA("BasePart") then
-                local numStr = roomNumber and tostring(roomNumber) or "?"
-                _G.Visuals.addVisuals(door, "Item", "Door [".. numStr .."]")
-                Watcher.latestDoor = door
-            end
-
-        end)
-        _G.Utils.storeObjectConnection(room, doorConn)
-
-
-        local connAdd = room.DescendantAdded:Connect(function(obj)
-            task.wait(0.05)
-            pcall(function() processObject(obj, roomNumber) end)
-        end)
-        _G.Utils.storeObjectConnection(room, connAdd)
-
-        local connRem = room.DescendantRemoving:Connect(function(obj)
-            if _G.state.visualObjects[obj] then _G.Visuals.removeVisual(obj) end
-        end)
-        _G.Utils.storeObjectConnection(room, connRem)
+local function updateLatestDoor(door, roomNumber)
+    if roomNumber and roomNumber > (Watcher.latestRoomNumber or -math.huge) then
+        Watcher.latestRoomNumber = roomNumber
+        Watcher.latestDoor = door
     end
+end
+
+local function registerRoom(room)
+    local roomNumber = _G.Utils.getRoomNumber(room)
+    for _, obj in ipairs(room:GetDescendants()) do
+        pcall(function() processObject(obj, roomNumber) end)
+    end
+
+    local entrances = room:WaitForChild("Entrances", 10)
+    if not entrances then
+        warn("No Entrances in room:", room)
+        return
+    end
+
+    for _, door in ipairs(entrances:GetChildren()) do
+        if door:IsA("Model") or door:IsA("BasePart") then
+            local numStr = roomNumber and tostring(roomNumber) or "?"
+            _G.Visuals.addVisuals(door, "Item", "Door [".. numStr .."]")
+            updateLatestDoor(door, roomNumber)
+        end
+    end
+
+    local doorConn = entrances.ChildAdded:Connect(function(door)
+        task.wait(0.1)
+        if door:IsA("Model") or door:IsA("BasePart") then
+            local numStr = roomNumber and tostring(roomNumber) or "?"
+            _G.Visuals.addVisuals(door, "Item", "Door [".. numStr .."]")
+            updateLatestDoor(door, roomNumber)
+        end
+
+    end)
+    _G.Utils.storeObjectConnection(room, doorConn)
+
+
+    local connAdd = room.DescendantAdded:Connect(function(obj)
+        task.wait(0.05)
+        pcall(function() processObject(obj, roomNumber) end)
+    end)
+    _G.Utils.storeObjectConnection(room, connAdd)
+
+    local connRem = room.DescendantRemoving:Connect(function(obj)
+        if _G.state.visualObjects[obj] then _G.Visuals.removeVisual(obj) end
+    end)
+    _G.Utils.storeObjectConnection(room, connRem)
+end
+
+local function watchRooms(roomsFolder)
 
     for _, room in ipairs(roomsFolder:GetChildren()) do
         task.spawn(function() registerRoom(room) end)

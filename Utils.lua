@@ -66,20 +66,25 @@ end
 function Utils.getRoomNumber(room)
     local lights = room:WaitForChild("Lights", 10)
     if not lights then return nil end
-    local minNum = 9999
-    local found = false
+
+    local nums = {}
+
     for _, child in ipairs(lights:GetChildren()) do
         if child.Name == "Sign" then
-            local sg = child:WaitForChild("SurfaceGui")
-            local tl = sg and sg:WaitForChild("TextLabel")
+            local sg = child:FindFirstChild("SurfaceGui")
+            local tl = sg and sg:FindFirstChild("TextLabel")
             if tl then
                 local num = tonumber(tl.Text)
-                if num and num < minNum then
-                    minNum = num
-                    found = true
+                if num then
+                    table.insert(nums, num)
                 end
             end
         end
     end
-    return found and minNum-1 or nil
+    if #nums >= 2 then
+        return math.floor((nums[1] + nums[2]) / 2)
+    end
+
+    return nil
 end
+
