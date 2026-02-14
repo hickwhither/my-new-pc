@@ -1,6 +1,5 @@
 -- main_loader.lua
--- Loader file: fetch các module từ http://localhost:8000/<file>
-local baseUrl = "http://localhost:8000/"
+local baseUrl = "https://raw.githubusercontent.com/hickwhither/my-new-pc/refs/heads/master/"
 
 local function fetch(name)
     local ok, res = pcall(function() return loadstring(game:HttpGet(baseUrl .. name))() end)
