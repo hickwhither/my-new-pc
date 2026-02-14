@@ -1,20 +1,19 @@
 -- main_loader.lua
 local baseUrl = "https://raw.githubusercontent.com/hickwhither/my-new-pc/refs/heads/master/"
+-- baseUrl = "http://localhost:8000/" -- debug
 
 local function fetch(name)
     local ok, res = pcall(function() return loadstring(game:HttpGet(baseUrl .. name))() end)
     if not ok then
-        error("Lỗi tải module " .. name .. ": " .. tostring(res))
+        warn("Lỗi tải module " .. name .. ": " .. tostring(res))
     end
     return res
 end
 
--- Tải state + config trước
-local state = fetch("state.lua")
-local config = fetch("config.lua")
+_G.class = fetch("pack/class.lua")
+_G.offlineservice = fetch("pack/offlineservice.lua")
 
--- Dịch vụ
-local services = {
+_G.services = {
     Workspace = game:GetService("Workspace"),
     Players = game:GetService("Players"),
     UIS = game:GetService("UserInputService"),
@@ -22,24 +21,43 @@ local services = {
     Lighting = game:GetService("Lighting")
 }
 
--- Tải module khác
-local utilsMod = fetch("utils.lua")
-local visualsMod = fetch("visuals.lua")
-local safeMod = fetch("safe_mode.lua")
-local uiMod = fetch("ui.lua")
-local watchersMod = fetch("watchers.lua")
 
--- Init module (truyền dependencies)
-local utils = utilsMod.Init(services, state, config)
-local visuals = visualsMod.Init(services, state, config, utils)
-local safe = safeMod.Init(services, state, config, utils)
-local ui = uiMod.Init(services, state, config, utils, visuals, safe)
-local watchers = watchersMod.Init(services, state, config, utils, visuals, safe, ui)
+_G.state = {
+    running = true,
+    connections = {},        -- tất cả connections chung
+    visualObjects = {},      -- map object -> visuals
+    itemTracers = {},        -- map object -> tracer parts
+    objectConnections = {},  -- map object -> list of per-object connections
+    dangerousParts = {},
 
--- Start UI + watchers
-pcall(function()
-    ui.createUI()
-    watchers.Start()
-end)
+    settings = {},
+
+    -- safe mode physics
+    safeModeActive = false,
+    originalCFrame = nil,
+    bodyVel = nil,
+    bodyGyro = nil,
+
+    originalLighting = nil
+}
+
+_G.config = {}
+_G.config.DANGEROUS_ENTITY_NAMES = {
+    ["Angler"] = true,
+    ["Froger"] = true,
+    ["Pinkie"] = true,
+    ["Blitz"] = true,
+    ["Chainsmoker"] = true,
+    ["Pandemonium"] = true,
+}
+
+fetch("Utils.lua")
+fetch("Visuals.lua")
+fetch("UI.lua")
+fetch("Watcher.lua")
+
+fetch("mods/Safe.lua")
+fetch("mods/Fullbright.lua")
+fetch("mods/Teleport.lua")
 
 print("✅ Modules loaded from " .. baseUrl)
