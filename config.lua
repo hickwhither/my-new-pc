@@ -5,7 +5,8 @@ cfg.DANGEROUS_ENTITY_NAMES = {
     ["Angler"] = true,
     ["Froger"] = true,
     ["Pinkie"] = true,
-    ["Blitz"] = true
+    ["Blitz"] = true,
+    ["Chainsmoker"] = true,
 }
 
 return cfg
