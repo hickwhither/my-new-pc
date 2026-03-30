@@ -3,7 +3,7 @@ local Watcher = _G.offlineservice("Watcher")
 
 local Workspace = _G.services.Workspace
 
-local function processObject(obj, roomNumber)
+local function processObject(obj)
     if not obj:IsDescendantOf(Workspace) then return end
     if not _G.state.running or not obj then return end
     if _G.state.visualObjects[obj] then return end
@@ -12,7 +12,6 @@ local function processObject(obj, roomNumber)
 
     local objName = obj.Name or "Unknown"
     local lowerName = string.lower(objName)
-    local roomSuffix = roomNumber and (" [P." .. roomNumber .. "]") or ""
 
     local breakTarget
     for dangerousName, _ in pairs(_G.config.DANGEROUS_ENTITY_NAMES) do
@@ -30,7 +29,7 @@ local function processObject(obj, roomNumber)
     end
 
     if objName == "Generator" then
-        _G.Visuals.addVisuals(obj, "Item", "Generator" .. roomSuffix)
+        _G.Visuals.addVisuals(obj, "Item", "Generator")
         breakTarget = obj
     end
 
@@ -41,14 +40,14 @@ local function processObject(obj, roomNumber)
             codeText = codePart.SurfaceGui.TextLabel.Text
         end
         _G.Visuals.addTracer(obj, Color3.fromRGB(255,100,255))
-        _G.Visuals.addVisuals(obj, "Item", "Pass: " .. codeText .. roomSuffix)
+        _G.Visuals.addVisuals(obj, "Item", "Pass: " .. codeText)
         breakTarget = obj
     end
 
     if string.find(objName, "KeyCard") then
         if obj:FindFirstChild("ProxyPart") then
             task.spawn(function() _G.Visuals.addTracer(obj, Color3.fromRGB(0,255,255)) end)
-            _G.Visuals.addVisuals(obj, "Item", objName .. roomSuffix)
+            _G.Visuals.addVisuals(obj, "Item", objName)
             breakTarget = obj
         end
     end
@@ -74,7 +73,7 @@ local function processObject(obj, roomNumber)
 
         if not prompt.Enabled then return end
 
-        _G.Visuals.addVisuals(obj, "Item", objName .. roomSuffix)
+        _G.Visuals.addVisuals(obj, "Item", objName)
 
         --------------------------------------------------
         -- AUTO REMOVE LOGIC
@@ -140,17 +139,9 @@ end
 Watcher.latestDoor = nil
 Watcher.latestRoomNumber = -math.huge
 
-local function updateLatestDoor(door, roomNumber)
-    if roomNumber and roomNumber > (Watcher.latestRoomNumber or -math.huge) then
-        Watcher.latestRoomNumber = roomNumber
-        Watcher.latestDoor = door
-    end
-end
-
 local function registerRoom(room)
-    local roomNumber = _G.Utils.getRoomNumber(room)
     for _, obj in ipairs(room:GetDescendants()) do
-        pcall(function() processObject(obj, roomNumber) end)
+        pcall(function() processObject(obj) end)
     end
 
     local entrances = room:WaitForChild("Entrances", 10)
@@ -161,18 +152,22 @@ local function registerRoom(room)
 
     for _, door in ipairs(entrances:GetChildren()) do
         if door:IsA("Model") or door:IsA("BasePart") then
-            local numStr = roomNumber and tostring(roomNumber) or "?"
-            _G.Visuals.addVisuals(door, "Item", "Door [".. numStr .."]")
-            updateLatestDoor(door, roomNumber)
+            _G.Visuals.addVisuals(door, "Item", "Door")
+            if Watcher.latestDoor then
+                _G.Visuals.removeVisual(Watcher.latestDoor)
+            end
+            Watcher.latestDoor = door
         end
     end
 
     local doorConn = entrances.ChildAdded:Connect(function(door)
         task.wait(0.1)
         if door:IsA("Model") or door:IsA("BasePart") then
-            local numStr = roomNumber and tostring(roomNumber) or "?"
-            _G.Visuals.addVisuals(door, "Item", "Door [".. numStr .."]")
-            updateLatestDoor(door, roomNumber)
+            _G.Visuals.addVisuals(door, "Item", "Door")
+            if Watcher.latestDoor then
+                _G.Visuals.removeVisual(Watcher.latestDoor)
+            end
+            Watcher.latestDoor = door
         end
 
     end)

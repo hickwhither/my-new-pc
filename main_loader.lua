@@ -1,6 +1,6 @@
 -- main_loader.lua
 local baseUrl = "https://raw.githubusercontent.com/hickwhither/my-new-pc/refs/heads/master/"
--- baseUrl = "http://localhost:8000/" -- debug
+baseUrl = "http://localhost:8000/" -- debug
 
 local function fetch(name)
     local ok, res = pcall(function() return loadstring(game:HttpGet(baseUrl .. name))() end)
@@ -56,8 +56,10 @@ fetch("Visuals.lua")
 fetch("UI.lua")
 fetch("Watcher.lua")
 
-fetch("mods/Safe.lua")
 fetch("mods/Fullbright.lua")
+fetch("mods/Flight.lua")
+fetch("mods/Noclip.lua")
 fetch("mods/Teleport.lua")
+-- fetch("mods/Safe.lua")
 
 print("✅ Modules loaded from " .. baseUrl)

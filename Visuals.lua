@@ -117,10 +117,10 @@ local function createTeleportButton(target)
     local btn = Instance.new("TextButton")
 
     -- khung rất nhỏ, gần như invisible
-    btn.Size = UDim2.new(0, 90, 0, 22)
+    btn.Size = UDim2.new(0, 100, 0, 100)
     btn.AnchorPoint = Vector2.new(0.5, 1)
 
-    btn.BackgroundTransparency = 1
+    btn.BackgroundTransparency = 0.9
     btn.Text = "" -- không chữ -> nhìn sạch
 
     btn.Parent = screenGui
@@ -205,6 +205,8 @@ function Visuals.addVisuals(obj, kind, nameOverride)
 
         visuals.SelectionBox = box
 
+        _G.UI.setWarningText("Password", nameOverride, Color3.fromRGB(255, 255, 0))
+
     elseif kind == "Item" then
 
         local color = Color3.fromRGB(0,255,255)
@@ -245,6 +247,13 @@ function Visuals.addVisuals(obj, kind, nameOverride)
         or string.find(lowerName, "generator")
         or string.find(overrideLower, "door") then
             visuals.TeleportButton = createTeleportButton(obj)
+        end
+
+        --------------------------------------------------
+        -- Add warning for password
+        --------------------------------------------------
+        if string.find(lowerName, "passwordpaper") then
+            _G.UI.setWarningText("Password", nameOverride, Color3.fromRGB(255, 255, 0))
         end
 
     end
@@ -298,6 +307,11 @@ function Visuals.removeVisual(obj)
         pcall(function() t.Att1:Destroy() end)
 
         _G.state.itemTracers[obj] = nil
+    end
+
+    -- Clear password warning if it's a password item
+    if string.find(string.lower(obj.Name), "passwordpaper") then
+        _G.UI.setWarningText("Password", nil) -- Clear the warning
     end
 
 end

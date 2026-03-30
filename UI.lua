@@ -42,7 +42,8 @@ local function rebuildWarnings()
 
     local lines = {}
     for _, name in ipairs(UI.warningsOrder) do
-        local txt = UI.warnings[name]
+        local warn = UI.warnings[name]
+        local txt = warn.text
         if txt and txt ~= "" then
             table.insert(lines, txt)
         end
@@ -53,11 +54,14 @@ local function rebuildWarnings()
     else
         warningLabel.Text = "⚠️ CẢNH BÁO ⚠️\n" .. table.concat(lines, "\n")
         warningLabel.Visible = true
+        -- Set color to the first warning's color
+        local firstWarn = UI.warnings[UI.warningsOrder[1]]
+        warningLabel.TextColor3 = firstWarn and firstWarn.color or Color3.fromRGB(255, 30, 30)
     end
 end
 
 -- public: set or clear a named warning
-function UI.setWarningText(name, text)
+function UI.setWarningText(name, text, color)
     if not name then return end
     if text == nil then
         if UI.warnings[name] then
@@ -73,7 +77,7 @@ function UI.setWarningText(name, text)
         if not UI.warnings[name] then
             table.insert(UI.warningsOrder, name)
         end
-        UI.warnings[name] = tostring(text)
+        UI.warnings[name] = {text = tostring(text), color = color or Color3.fromRGB(255, 30, 30)}
     end
     rebuildWarnings()
 end

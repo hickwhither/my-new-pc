@@ -8,13 +8,19 @@ local connections = {}
 --------------------------------------------------
 -- UI REGISTER (giữ nguyên style của bạn)
 --------------------------------------------------
-_G.state.settings.fullbrightEnabled = false
-_G.UI.createButton("fullbrightEnabled", Color3.fromRGB(0, 170, 255))
-_G.UI.addEventHandler("fullbrightEnabled", function(state)
+_G.state.settings.Fullbright = false
+_G.UI.createButton("Fullbright", Color3.fromRGB(0, 170, 255))
+_G.UI.addEventHandler("Fullbright", function(state)
     Fullbright.toggle(state)
 end)
 _G.UI.addStopHandler(function()
-    Fullbright.cleanup()
+    if _G.state.settings.FullBright then
+        pcall(function()
+            Fullbright.toggle(false)
+        end)
+    end
+    
+    script:Destroy()
 end)
 
 --------------------------------------------------
@@ -60,7 +66,7 @@ local function connectLocks()
 
     for _, prop in ipairs(props) do
         local conn = Lighting:GetPropertyChangedSignal(prop):Connect(function()
-            if _G.state.settings.fullbrightEnabled then
+            if _G.state.settings.FullBright then
                 applyFullbright()
             end
         end)
@@ -103,17 +109,3 @@ function Fullbright.toggle(enable)
     end
 end
 
---------------------------------------------------
--- CLEANUP
---------------------------------------------------
-function Fullbright.cleanup()
-    disconnectLocks()
-
-    if _G.state.settings.fullbrightEnabled then
-        pcall(function()
-            Fullbright.toggle(false)
-        end)
-    end
-end
-
-return Fullbright
