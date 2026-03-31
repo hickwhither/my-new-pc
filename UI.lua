@@ -13,7 +13,7 @@ local UIS = _G.services.UIS
 local Lighting = _G.services.Lighting
 
 local screenGui
-local warningLabel
+local warningsContainer
 local mainFrame
 local container
 
@@ -24,40 +24,35 @@ UI.stopHandlers = {}    -- extra handlers when stop pressed
 UI.warnings = {}        -- name -> text
 UI.warningsOrder = {}   -- ordered list of names (preserve insertion order)
 
--- helper: rebuild warningLabel text from warningsOrder
+-- helper: rebuild warning labels from warningsOrder
 local function rebuildWarnings()
-    if not warningLabel then return end
+    if not warningsContainer then return end
 
-    -- remove names that no longer exist in warnings map
-    local cleaned = {}
-    for _, name in ipairs(UI.warningsOrder) do
-        if UI.warnings[name] then table.insert(cleaned, name) end
-    end
-    UI.warningsOrder = cleaned
+    -- clear existing labels
+    warningsContainer:ClearAllChildren()
 
     if #UI.warningsOrder == 0 then
-        warningLabel.Visible = false
+        warningsContainer.Visible = false
         return
     end
 
-    local lines = {}
     for _, name in ipairs(UI.warningsOrder) do
         local warn = UI.warnings[name]
-        local txt = warn.text
-        if txt and txt ~= "" then
-            table.insert(lines, txt)
+        if warn and warn.text and warn.text ~= "" then
+            local label = Instance.new("TextLabel")
+            label.Size = UDim2.new(0, 500, 0, 30)
+            label.ZIndex = 2147483647
+            label.Text = warn.text
+            label.TextColor3 = warn.color
+            label.BackgroundTransparency = 1
+            label.Font = Enum.Font.GothamBlack
+            label.TextSize = 24
+            label.TextWrapped = true
+            label.Parent = warningsContainer
         end
     end
 
-    if #lines == 0 then
-        warningLabel.Visible = false
-    else
-        warningLabel.Text = "⚠️ CẢNH BÁO ⚠️\n" .. table.concat(lines, "\n")
-        warningLabel.Visible = true
-        -- Set color to the first warning's color
-        local firstWarn = UI.warnings[UI.warningsOrder[1]]
-        warningLabel.TextColor3 = firstWarn and firstWarn.color or Color3.fromRGB(255, 30, 30)
-    end
+    warningsContainer.Visible = true
 end
 
 -- public: set or clear a named warning
@@ -99,9 +94,11 @@ end
 
 -- internal: small button factory used by UI.createButton
 local function makeButtonInstance(btnText, bgColor)
+    print("creating button...", btnText)
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(0, 220, 0, 36)
     b.BackgroundColor3 = bgColor or Color3.fromRGB(50, 50, 50)
+    b.ZIndex = 2147483647
     b.Text = btnText or ""
     b.TextColor3 = Color3.new(1, 1, 1)
     b.Font = Enum.Font.GothamBold
@@ -184,6 +181,7 @@ mainFrame.AnchorPoint = Vector2.new(1, 0.5)
 mainFrame.Position = UDim2.new(1, -20, 0.5, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mainFrame.BorderSizePixel = 0
+mainFrame.ZIndex = 2147483647
 mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Visible = false
@@ -192,6 +190,7 @@ Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
 
 local modalToggle = Instance.new("TextButton")
 modalToggle.Size = UDim2.new(0, 0, 0, 0)
+modalToggle.ZIndex = 2147483647
 modalToggle.Modal = false
 modalToggle.BackgroundTransparency = 1
 modalToggle.Text = ""
@@ -199,6 +198,7 @@ modalToggle.Parent = mainFrame
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 45)
+title.ZIndex = 2147483647
 title.Text = "INTERNAL CONTROL"
 title.TextColor3 = Color3.new(1, 1, 1)
 title.BackgroundTransparency = 1
@@ -206,22 +206,24 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 16
 title.Parent = mainFrame
 
-warningLabel = Instance.new("TextLabel")
-warningLabel.Size = UDim2.new(0, 500, 0, 80)
-warningLabel.AnchorPoint = Vector2.new(0.5, 0)
-warningLabel.Position = UDim2.new(0.5, 0, 0.1, 0)
-warningLabel.Text = "⚠️ CẢNH BÁO ⚠️"
-warningLabel.TextColor3 = Color3.fromRGB(255, 30, 30)
-warningLabel.BackgroundTransparency = 1
-warningLabel.Font = Enum.Font.GothamBlack
-warningLabel.TextSize = 24
-warningLabel.Visible = false
-warningLabel.TextWrapped = true
-warningLabel.Parent = screenGui
+warningsContainer = Instance.new("Frame")
+warningsContainer.Size = UDim2.new(0, 500, 0, 0)
+warningsContainer.AnchorPoint = Vector2.new(0.5, 0)
+warningsContainer.Position = UDim2.new(0.5, 0, 0.2, 0)
+warningsContainer.BackgroundTransparency = 1
+warningsContainer.ZIndex = 2147483647
+warningsContainer.Visible = false
+warningsContainer.Parent = screenGui
+
+local warningsLayout = Instance.new("UIListLayout")
+warningsLayout.Padding = UDim.new(0, 5)
+warningsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+warningsLayout.Parent = warningsContainer
 
 container = Instance.new("Frame")
 container.Size = UDim2.new(1, -20, 1, -120)
 container.Position = UDim2.new(0, 10, 0, 50)
+container.ZIndex = 2147483647
 container.BackgroundTransparency = 1
 container.Parent = mainFrame
 
@@ -249,7 +251,7 @@ local function toggleUI()
 end
 
 -- Stop script button (kept)
-local killBtn = makeDefaultButton("DỪNG SCRIPT", Color3.fromRGB(120, 0, 0), function()
+local function killBtnEvent()
     _G.state.running = false
     if _G.Safe and _G.Safe.toggleSafeMode then
         pcall(function() _G.Safe.toggleSafeMode(false) end)
@@ -272,14 +274,15 @@ local killBtn = makeDefaultButton("DỪNG SCRIPT", Color3.fromRGB(120, 0, 0), fu
     toggleUI()
     screenGui:Destroy()
     print("✅ Script đã dừng (UI requested).")
-end)
+end
+local killBtn = makeDefaultButton("DỪNG SCRIPT", Color3.fromRGB(120, 0, 0), killBtnEvent)
 
 -- backquote; Ctrl+backquote => kill
 local inputConn = UIS.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Enum.KeyCode.Backquote then
         if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
-            killBtn:Activate()
+            killBtnEvent()
         else
             toggleUI()
         end

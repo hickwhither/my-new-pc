@@ -5,13 +5,18 @@ local RunService = _G.services.RunService
 local Player = _G.services.Players.LocalPlayer
 
 _G.state.settings.safeHeightEnabled = false
+_G.state.settings.deleteClientsidedNodeEnabled = false
+
 _G.UI.createButton("safeHeightEnabled")
+_G.UI.createButton("deleteClientsidedNodeEnabled")
+
 _G.UI.addEventHandler("safeHeightEnabled", function(enabled)
     if not enabled then
         Safe.toggleSafeMode(false)
     end
 end)
 _G.UI.addStopHandler(function() Safe.toggleSafeMode(false) end)
+
 
 -- Safe mode toggle
 function Safe.toggleSafeMode(enable)
@@ -93,6 +98,18 @@ heartbeatConn = RunService.Heartbeat:Connect(function()
         Safe.toggleSafeMode(true)
     else
         Safe.toggleSafeMode(false)
+    end
+
+    if _G.state.settings.deleteClientsidedNodeEnabled then
+        for part, active in pairs(_G.state.dangerousParts) do
+            if active and part and part.Parent then
+                local name = part.Name
+                if _G.config.DANGEROUS_DELETEABLE[name] then
+                    part:Destroy()
+                    _G.state.dangerousParts[part] = nil
+                end
+            end
+        end
     end
 end)
 

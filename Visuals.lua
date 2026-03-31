@@ -79,6 +79,7 @@ local function createBillboard(target, text, color)
     local bb = Instance.new("BillboardGui")
     bb.Name = "ESP_Tag"
     bb.Adornee = adornee
+    bb.Parent = target
     bb.Size = UDim2.new(0, 200, 0, 40)
     bb.StudsOffset = Vector3.new(0, 2.3, 0)
     bb.AlwaysOnTop = true
@@ -253,6 +254,20 @@ function Visuals.addVisuals(obj, kind, nameOverride)
         if string.find(lowerName, "passwordpaper") then
             _G.UI.setWarningText("Password", nameOverride, Color3.fromRGB(255, 255, 0))
         end
+
+    elseif kind == "UnknownMonster" then
+        print(nameOverride or obj.Name)
+        visuals.Billboard =
+            createBillboard(obj, (nameOverride or obj.Name), Color3.fromRGB(255,0,255))
+
+        local hl = Instance.new("Highlight")
+        hl.FillColor = Color3.fromRGB(255,0,255)
+        hl.FillTransparency = 0.5
+        hl.OutlineTransparency = 0.5
+        hl.Adornee = obj.PrimaryPart
+        hl.Parent = obj
+
+        visuals.Highlight = hl
 
     end
 

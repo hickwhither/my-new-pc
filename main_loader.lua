@@ -38,17 +38,32 @@ _G.state = {
     bodyVel = nil,
     bodyGyro = nil,
 
-    originalLighting = nil
+    originalLighting = nil,
+
+    -- new: objects by kind
+    objectsByKind = {},      -- map kind -> list of objects
+    objectKinds = {}         -- map object -> kind
 }
 
 _G.config = {}
 _G.config.DANGEROUS_ENTITY_NAMES = {
-    ["Angler"] = true,
-    ["Froger"] = true,
-    ["Pinkie"] = true,
-    ["Blitz"] = true,
-    ["Chainsmoker"] = true,
-    ["Pandemonium"] = true,
+    ["Angler"]=true,["Froger"]=true,["Pinkie"]=true,["Blitz"]=true,["Chainsmoker"]=true,
+    ["Pandemonium"]=true,
+    ["Pipsqueak"]=true,["A60"]=true,["A200"]=true,
+    
+    ["Bleach"]=true,["Harbinger"]=true,["Mirage"]=true,
+    
+    ["Anglemonium"]=true,["Frogermonium"]=true,["Pinkimonium"]=true,
+    ["Pandesmoker"]=true,["Blitzemonium"]=true,
+    
+    ["Carnation"] = true,
+}
+_G.config.DANGEROUS_DELETEABLE = {
+    ["Pandemonium"]=true,
+    ["Pipsqueak"]=true,
+    ["Harbinger"]=true,
+    ["Anglemonium"]=true,["Frogermonium"]=true,["Pinkimonium"]=true,
+    ["Pandesmoker"]=true,["Blitzemonium"]=true,
 }
 
 fetch("Utils.lua")
