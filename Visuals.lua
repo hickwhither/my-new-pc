@@ -205,8 +205,6 @@ function Visuals.addVisuals(obj, kind, nameOverride)
 
         visuals.SelectionBox = box
 
-        _G.UI.setWarningText("Password", nameOverride, Color3.fromRGB(255, 255, 0))
-
     elseif kind == "Item" then
 
         local color = Color3.fromRGB(0,255,255)

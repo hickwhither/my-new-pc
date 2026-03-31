@@ -60,6 +60,6 @@ fetch("mods/Fullbright.lua")
 fetch("mods/Flight.lua")
 fetch("mods/Noclip.lua")
 fetch("mods/Teleport.lua")
--- fetch("mods/Safe.lua")
+fetch("mods/Safe.lua")
 
 print("✅ Modules loaded from " .. baseUrl)
