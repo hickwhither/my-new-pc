@@ -1,6 +1,6 @@
 -- main_loader.lua
 local baseUrl = "https://raw.githubusercontent.com/hickwhither/my-new-pc/refs/heads/master/"
-baseUrl = "http://localhost:8000/" -- debug
+-- baseUrl = "http://localhost:8000/" -- debug
 
 local function fetch(name)
     local ok, res = pcall(function() return loadstring(game:HttpGet(baseUrl .. name))() end)
