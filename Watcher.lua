@@ -40,9 +40,8 @@ local function processWorkspaceObject(obj)
 
     for dangerousName, _ in pairs(_G.config.DANGEROUS_ENTITY_NAMES) do
         if string.find(lowerName, string.lower(dangerousName), 1, true) then
-            _G.state.dangerousParts[obj] = true
-            _G.Visuals.addVisuals(obj, "Enemy", objName)
-            addToKind(obj, "Enemy")
+            _G.Visuals.addVisuals(obj, "Monster", objName)
+            addToKind(obj, "Monster")
             return
         end
     end
@@ -174,12 +173,12 @@ end
 
 local function watchWorkspace()
     for _, child in ipairs(Workspace:GetChildren()) do
-        pcall(function() processWorkspaceObject(child, nil) end)
+        pcall(function() processWorkspaceObject(child) end)
     end
 
     local descAdded = Workspace.ChildAdded:Connect(function(c)
         if not _G.state.running then return end
-        pcall(function() processWorkspaceObject(c, nil) end)
+        pcall(function() processWorkspaceObject(c) end)
     end)
     table.insert(_G.state.connections, descAdded)
 

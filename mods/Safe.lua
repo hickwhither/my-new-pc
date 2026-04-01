@@ -76,8 +76,13 @@ heartbeatConn = RunService.Heartbeat:Connect(function()
     if not _G.state.running then return end
 
     local dangerList = {}
-    for part, active in pairs(_G.state.dangerousParts) do
-        if active and part and part.Parent then
+    for _, part in ipairs(_G.state.objectsByKind["Monster"] or {}) do
+        if part and part.Parent then
+            table.insert(dangerList, part.Name)
+        end
+    end
+    for _, part in ipairs(_G.state.objectsByKind["UnknownMonster"] or {}) do
+        if part and part.Parent then
             table.insert(dangerList, part.Name)
         end
     end
@@ -101,12 +106,19 @@ heartbeatConn = RunService.Heartbeat:Connect(function()
     end
 
     if _G.state.settings.deleteClientsidedNodeEnabled then
-        for part, active in pairs(_G.state.dangerousParts) do
-            if active and part and part.Parent then
+        for _, part in ipairs(_G.state.objectsByKind["Monster"] or {}) do
+            if part and part.Parent then
                 local name = part.Name
                 if _G.config.DANGEROUS_DELETEABLE[name] then
                     part:Destroy()
-                    _G.state.dangerousParts[part] = nil
+                end
+            end
+        end
+        for _, part in ipairs(_G.state.objectsByKind["UnknownMonster"] or {}) do
+            if part and part.Parent then
+                local name = part.Name
+                if _G.config.DANGEROUS_DELETEABLE[name] then
+                    part:Destroy()
                 end
             end
         end

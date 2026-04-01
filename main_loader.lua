@@ -28,7 +28,6 @@ _G.state = {
     visualObjects = {},      -- map object -> visuals
     itemTracers = {},        -- map object -> tracer parts
     objectConnections = {},  -- map object -> list of per-object connections
-    dangerousParts = setmetatable({}, { __mode = "k" }),
 
     settings = {},
 

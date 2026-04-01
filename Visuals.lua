@@ -189,7 +189,7 @@ function Visuals.addVisuals(obj, kind, nameOverride)
 
     local visuals = {}
 
-    if kind == "Enemy" then
+    if kind == "Monster" then
 
         visuals.Billboard =
             createBillboard(obj,
@@ -201,7 +201,6 @@ function Visuals.addVisuals(obj, kind, nameOverride)
         box.Color3 = Color3.fromRGB(255,0,0)
         box.LineThickness = 0.05
         box.SurfaceTransparency = 0.9
-        box.AlwaysOnTop = true
         box.Parent = obj
 
         visuals.SelectionBox = box

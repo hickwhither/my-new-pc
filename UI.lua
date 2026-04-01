@@ -28,20 +28,18 @@ UI.warningsOrder = {}   -- ordered list of names (preserve insertion order)
 local function rebuildWarnings()
     if not warningsContainer then return end
 
-    -- clear existing labels
-    warningsContainer:ClearAllChildren()
-
-    if #UI.warningsOrder == 0 then
-        warningsContainer.Visible = false
-        return
+    for _, child in ipairs(warningsContainer:GetChildren()) do
+        if child:IsA("TextLabel") then
+            child:Destroy()
+        end
     end
 
     for _, name in ipairs(UI.warningsOrder) do
         local warn = UI.warnings[name]
         if warn and warn.text and warn.text ~= "" then
             local label = Instance.new("TextLabel")
-            label.Size = UDim2.new(0, 500, 0, 30)
-            label.ZIndex = 2147483647
+            label.Name = name
+            label.Size = UDim2.new(1, 0, 0, 30)
             label.Text = warn.text
             label.TextColor3 = warn.color
             label.BackgroundTransparency = 1
@@ -51,8 +49,6 @@ local function rebuildWarnings()
             label.Parent = warningsContainer
         end
     end
-
-    warningsContainer.Visible = true
 end
 
 -- public: set or clear a named warning
@@ -96,14 +92,15 @@ end
 local function makeButtonInstance(btnText, bgColor)
     print("creating button...", btnText)
     local b = Instance.new("TextButton")
+    b.Name = "Button"
     b.Size = UDim2.new(0, 220, 0, 36)
     b.BackgroundColor3 = bgColor or Color3.fromRGB(50, 50, 50)
-    b.ZIndex = 2147483647
     b.Text = btnText or ""
     b.TextColor3 = Color3.new(1, 1, 1)
     b.Font = Enum.Font.GothamBold
     b.TextSize = 13
     local corner = Instance.new("UICorner")
+    corner.Name = "ButtonCorner"
     corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = b
     b.Parent = container
@@ -144,6 +141,8 @@ function UI.createButton(name, color)
 
     local btn = makeButtonInstance(getDisplayText(), getColor())
 
+    btn.Name = name
+
     btn.MouseButton1Click:Connect(function()
         -- toggle
         if isToggle then
@@ -176,29 +175,32 @@ screenGui.IgnoreGuiInset = true
 screenGui.Parent = pgui
 
 mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 260, 0, 260)
 mainFrame.AnchorPoint = Vector2.new(1, 0.5)
 mainFrame.Position = UDim2.new(1, -20, 0.5, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mainFrame.BorderSizePixel = 0
-mainFrame.ZIndex = 2147483647
 mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Visible = false
 mainFrame.Parent = screenGui
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
+local mainFrameCorner = Instance.new("UICorner")
+mainFrameCorner.Name = "MainFrameCorner"
+mainFrameCorner.CornerRadius = UDim.new(0, 10)
+mainFrameCorner.Parent = mainFrame
 
 local modalToggle = Instance.new("TextButton")
+modalToggle.Name = "ModalToggle"
 modalToggle.Size = UDim2.new(0, 0, 0, 0)
-modalToggle.ZIndex = 2147483647
 modalToggle.Modal = false
 modalToggle.BackgroundTransparency = 1
 modalToggle.Text = ""
 modalToggle.Parent = mainFrame
 
 local title = Instance.new("TextLabel")
+title.Name = "Title"
 title.Size = UDim2.new(1, 0, 0, 45)
-title.ZIndex = 2147483647
 title.Text = "INTERNAL CONTROL"
 title.TextColor3 = Color3.new(1, 1, 1)
 title.BackgroundTransparency = 1
@@ -207,27 +209,30 @@ title.TextSize = 16
 title.Parent = mainFrame
 
 warningsContainer = Instance.new("Frame")
-warningsContainer.Size = UDim2.new(0, 500, 0, 0)
+warningsContainer.Name = "WarningsContainer"
+warningsContainer.Size = UDim2.new(1, 0, 0, 0)
 warningsContainer.AnchorPoint = Vector2.new(0.5, 0)
 warningsContainer.Position = UDim2.new(0.5, 0, 0.2, 0)
 warningsContainer.BackgroundTransparency = 1
-warningsContainer.ZIndex = 2147483647
-warningsContainer.Visible = false
+warningsContainer.Visible = true
+warningsContainer.AutomaticSize = Enum.AutomaticSize.Y
 warningsContainer.Parent = screenGui
 
 local warningsLayout = Instance.new("UIListLayout")
+warningsLayout.Name = "WarningsLayout"
 warningsLayout.Padding = UDim.new(0, 5)
 warningsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 warningsLayout.Parent = warningsContainer
 
 container = Instance.new("Frame")
+container.Name = "ButtonsContainer"
 container.Size = UDim2.new(1, -20, 1, -120)
 container.Position = UDim2.new(0, 10, 0, 50)
-container.ZIndex = 2147483647
 container.BackgroundTransparency = 1
 container.Parent = mainFrame
 
 local layout = Instance.new("UIListLayout")
+layout.Name = "ButtonsLayout"
 layout.Padding = UDim.new(0, 8)
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 layout.Parent = container
@@ -235,6 +240,7 @@ layout.Parent = container
 -- Pre-built helpful buttons (kept for convenience)
 local function makeDefaultButton(text, color, cb)
     local b = makeButtonInstance(text, color)
+    b.Name = text
     b.MouseButton1Click:Connect(function()
         pcall(cb)
     end)
