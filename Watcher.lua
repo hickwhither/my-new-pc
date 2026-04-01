@@ -57,7 +57,7 @@ local function processRoomObject(obj)
     local lowerName = string.lower(objName)
 
     if objName == "Locker" then
-        _G.Visuals.addVisuals(obj, "Item", "Locker")
+        _G.Visuals.addVisuals(obj, "Locker", "Locker")
         addToKind(obj, "Item")
         return
     end
@@ -74,6 +74,7 @@ local function processRoomObject(obj)
         if codePart and codePart:WaitForChild("SurfaceGui") and codePart.SurfaceGui:WaitForChild("TextLabel") then
             codeText = codePart.SurfaceGui.TextLabel.Text
         end
+        _G.state.currentPassword = codeText  -- Save current password to state
         _G.Visuals.addTracer(obj, Color3.fromRGB(255,100,255))
         _G.Visuals.addVisuals(obj, "Item", "Pass: " .. codeText)
         addToKind(obj, "Item")
@@ -198,7 +199,7 @@ end)
     table.insert(_G.state.connections, descRemoving)
 end
 
-Watcher.latestDoor = nil
+Watcher.latestDoors = {}
 
 local function registerRoom(room)
     for _, obj in ipairs(room:GetDescendants()) do
@@ -211,28 +212,55 @@ local function registerRoom(room)
         return
     end
 
+    local newDoors = {}
     for _, door in ipairs(entrances:GetChildren()) do
-        if door:IsA("Model") or door:IsA("BasePart") then
-            _G.Visuals.addVisuals(door, "Item", "Door")
-            addToKind(door, "Item")
-            if Watcher.latestDoor then
-                removeFromKind(Watcher.latestDoor)
-                _G.Visuals.removeVisual(Watcher.latestDoor)
+        if door:IsA("Model") then
+            if door.Name == "DoubleDoorSewer" then
+                for _, sdoor in ipairs(door:GetChildren()) do
+                    if sdoor:IsA("Model") then
+                        _G.Visuals.addVisuals(sdoor, "Item", "Door")
+                        addToKind(sdoor, "Door")
+                        table.insert(newDoors, sdoor)
+                    end
+                end
+            else
+                _G.Visuals.addVisuals(door, "Item", "Door")
+                addToKind(door, "Door")
+                table.insert(newDoors, door)
             end
-            Watcher.latestDoor = door
         end
     end
+    -- Change color of old doors
+    for _, oldDoor in ipairs(Watcher.latestDoors) do
+        _G.Visuals.removeVisual(oldDoor)
+        removeFromKind(oldDoor)
+    end
+    Watcher.latestDoors = newDoors
 
     local doorConn = entrances.ChildAdded:Connect(function(door)
         task.wait(0.1)
         if door:IsA("Model") or door:IsA("BasePart") then
-            _G.Visuals.addVisuals(door, "Item", "Door")
-            addToKind(door, "Item")
-            if Watcher.latestDoor then
-                removeFromKind(Watcher.latestDoor)
-                _G.Visuals.removeVisual(Watcher.latestDoor)
+            local addedDoors = {}
+            if door.Name == "DoubleDoorSewer" then
+                for _, sdoor in ipairs(door:GetChildren()) do
+                    if sdoor:IsA("Model") or sdoor:IsA("BasePart") then
+                        _G.Visuals.addVisuals(sdoor, "Item", "Door")
+                        addToKind(sdoor, "Door")
+                        table.insert(addedDoors, sdoor)
+                    end
+                end
+            else
+                _G.Visuals.addVisuals(door, "Item", "Door")
+                addToKind(door, "Door")
+                table.insert(addedDoors, door)
             end
-            Watcher.latestDoor = door
+            -- Change color of old doors
+            for _, oldDoor in ipairs(Watcher.latestDoors) do
+                _G.Visuals.removeVisual(oldDoor)
+                removeFromKind(oldDoor)
+            end
+            -- Set new doors as latest
+            Watcher.latestDoors = addedDoors
         end
 
     end)

@@ -327,3 +327,19 @@ function Visuals.removeVisual(obj)
     end
 
 end
+
+--------------------------------------------------
+-- UPDATE VISUAL COLOR
+--------------------------------------------------
+
+function Visuals.updateVisualColor(obj, newColor)
+    local v = _G.state.visualObjects[obj]
+    if v then
+        if v.Highlight then
+            v.Highlight.FillColor = newColor
+        end
+        if v.Billboard and v.Billboard:FindFirstChild("TextLabel") then
+            v.Billboard.TextLabel.TextColor3 = newColor
+        end
+    end
+end
