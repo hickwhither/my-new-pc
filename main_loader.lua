@@ -75,6 +75,7 @@ fetch("Watcher.lua")
 
 fetch("mods/Fullbright.lua")
 fetch("mods/Flight.lua")
+fetch("mods/Speed.lua")
 fetch("mods/Noclip.lua")
 fetch("mods/Speedrun.lua")
 fetch("mods/Safe.lua")
