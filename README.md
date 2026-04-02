@@ -8,7 +8,3 @@ Set fly speed
 ```
 _G.FLY_SPEED = ...
 ```
-
-### Update 2026/03/31
-- Added ignore client-sided nodes monsters
-- WallDweller ESP added
