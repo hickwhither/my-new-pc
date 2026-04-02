@@ -11,6 +11,17 @@ _G.FLY_SPEED = ...
 
 ## Flask + Tkinter external GUI bridge
 
+
+Để `main_loader.lua` tải module qua bridge local thay vì GitHub, set trước khi `loadstring`:
+
+```lua
+_G.BRIDGE_BASE_URL = "http://127.0.0.1:8765"
+```
+
+Khi bật biến này, `main_loader.lua` sẽ:
+- tải module qua `GET /src/<file.lua>`
+- tự poll `GET /changes?since=<id>` để nhận delta thay đổi mới
+
 Chạy menu ngoài game:
 
 ```bash
