@@ -3,24 +3,6 @@ local Auto_Pickup = _G.offlineservice("Auto_Pickup")
 
 local connections = {}
 
-local function getPrimaryPart(target)
-    if not target then
-        return nil
-    end
-
-    if target:IsA("BasePart") then
-        return target
-    end
-
-    if target:IsA("Model") then
-        return target.PrimaryPart
-            or target:FindFirstChild("ProxyPart", true)
-            or target:FindFirstChildWhichIsA("BasePart", true)
-    end
-
-    return nil
-end
-
 --------------------------------------------------
 -- UI REGISTER (giữ nguyên style của bạn)
 --------------------------------------------------
@@ -70,8 +52,8 @@ local function autoPickup()
             for _, obj in ipairs(_G.state.objectsByKind["Item"] or {}) do
                 if obj and obj:IsDescendantOf(_G.services.Workspace) then
                     local objName = obj.Name or ""
-                    if not (string.find(objName, "Currency") or objName == "KeyCard" or objName == "PasswordPaper" or objName == "BluePrint") then continue end
-                    local primarypart = getPrimaryPart(obj)
+                    if not (string.find(objName, "Currency") or objName == "NormalKeyCard" or objName == "PasswordPaper" or objName == "BluePrint") then continue end
+                    local primarypart = _G.Utils.getPrimaryPart(obj)
                     local prompt = findProximityPrompt(obj)
                     if primarypart == nil then continue end
                     if prompt == nil then continue end

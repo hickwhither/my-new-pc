@@ -155,7 +155,9 @@ function UI.createButton(name, color)
         local list = UI.handlers[name]
         if list then
             for _, fn in ipairs(list) do
-                pcall(fn, _G.state.settings[name]) -- pass new state
+                task.spawn(function()
+                    pcall(fn, _G.state.settings[name]) -- pass new state
+                end)
             end
         end
     end)

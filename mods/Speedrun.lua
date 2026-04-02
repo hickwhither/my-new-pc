@@ -1,65 +1,110 @@
--- Teleport.lua
-local Teleport = _G.offlineservice and _G.offlineservice("Teleport") or {}
+-- Speedrun.lua
+local Speedrun = _G.offlineservice("Speedrun")
 
-local Players = _G.services.Players
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 
--- UI Bind
-_G.UI.createButton("teleportToNextDoor", Color3.fromRGB(0, 120, 215))
-_G.UI.addEventHandler("teleportToNextDoor", function()
-    Teleport.teleportToNextDoor()
+-- UI Register
+_G.state.settings.Speedrun = false
+_G.UI.createButton("Speedrun")
+
+_G.UI.addEventHandler("Speedrun", function(enabled)
+    _G.state.settings.Speedrun = enabled
+    Speedrun:toggle(enabled)
 end)
 
--- Method
-function Teleport.teleportToNextDoor()
+_G.UI.addStopHandler(function()
+    _G.state.settings.Speedrun = false
+    Speedrun:toggle(false)
+end)
+
+-- Helper functions
+local function getCharacter()
     local player = Players.LocalPlayer
-    if not player then return end
+    return player and player.Character
+end
 
-    local char = player.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
+local function getRootPart()
+    local char = getCharacter()
+    return char and char:FindFirstChild("HumanoidRootPart")
+end
+
+local function findNearestNormalKeyCard()
+    local root = getRootPart()
     if not root then return end
+    -- Find in objectsByKind["Item"] those with Name containing "NormalKeyCard"
+    local items = _G.state.objectsByKind["Item"] or {}
+    local nearest, dist = nil, math.huge
+    for _, item in ipairs(items) do
+        if string.find(item.Name, "NormalKeyCard") then
+            local d = (_G.Utils.getPrimaryPart(item).Position - _G.Utils.getPrimaryPart(root).Position).Magnitude
+            if d < dist then
+                nearest, dist = item, d
+            end
+        end
+    end
+    return nearest
+end
 
-    -- Kill text
+local function openLock(door)
+    local lock = door:FindFirstChild("Lock")
+    if lock and lock:FindFirstChild("Main") and lock.Main:FindFirstChild("ProximityPrompt") then
+        local pp = lock.Main.ProximityPrompt
+        pp:InputHoldBegin()
+        pp.HoldDuration = 0
+        task.wait(0.1)
+        pp:InputHoldEnd()
+    end
+end
+
+function Speedrun:toggle(enabled)
+    if enabled then
+        self:startSpeedrunLoop()
+    else
+        self:stopSpeedrunLoop()
+    end
+end
+
+function Speedrun:startSpeedrunLoop()
+    self.running = true
     task.spawn(function()
-        task.wait(2)
-        _G.UI.setWarningText("teleport")
+        while self.running do
+            self:processNextDoor()
+            task.wait(1)  -- Wait 1s before next door
+        end
     end)
+end
 
-    local targetDoor = _G.Watcher.latestDoor
+function Speedrun:stopSpeedrunLoop()
+    self.running = false
+end
 
-    if not targetDoor or not targetDoor.Parent then
-        warn("❌ Không tìm thấy latestDoor.")
-        if _G.UI and _G.UI.setWarningText then
-            _G.UI.setWarningText("teleport", "❌ Không có cửa để dịch chuyển")
+function Speedrun:processNextDoor()
+    local door = _G.Watcher.latestDoors[1]
+    local doorPosition = _G.Utils.getPrimaryPart(door).Position + Vector3.new(0, -3, 0)
+    if not door then return end
+    local hasLock = door:FindFirstChild("Lock") ~= nil
+
+    if not hasLock then
+        _G.Utils.teleportToPosition(doorPosition)
+        task.wait(0.5)
+        local upPos = doorPosition + Vector3.new(0, 100, 0)
+        _G.Utils.teleportToPosition(upPos)
+    else
+        -- Find key, tele to key, tele to door, tele up 100 in 1s, tele back, open lock
+        local key = findNearestNormalKeyCard()
+        if key then
+            _G.Utils.teleportToPosition(_G.Utils.getPrimaryPart(key).Position)
+            task.wait(0.5)  -- Wait a bit
         end
-        return
+        _G.Utils.teleportToPosition(doorPosition)
+        task.wait(0.5)
+        local upPos = doorPosition + Vector3.new(0, 100, 0)
+        _G.Utils.teleportToPosition(upPos)
+        task.wait(1)
+        _G.Utils.teleportToPosition(doorPosition)
+        task.wait(0.5)
+        openLock(door)
     end
-
-    -- find position
-    local posPart
-    if targetDoor:IsA("Model") then
-        if targetDoor.PrimaryPart then
-            posPart = targetDoor.PrimaryPart.Position
-        else
-            local bp = targetDoor:FindFirstChildWhichIsA("BasePart")
-            if bp then posPart = bp.Position end
-        end
-    elseif targetDoor:IsA("BasePart") then
-        posPart = targetDoor.Position
-    end
-    if not posPart then
-        warn("Teleport: không tìm được vị trí cửa.")
-
-        if _G.UI and _G.UI.setWarningText then
-            _G.UI.setWarningText("teleport", "❌ Không xác định được vị trí cửa")
-        end
-        return
-    end
-
-    -- teleport
-    root.CFrame = CFrame.new(posPart + Vector3.new(0, 3, 0))
-    if _G.UI and _G.UI.setWarningText then
-        _G.UI.setWarningText("teleport", nil)
-    end
-    print("🚀 Đã dịch chuyển tới cửa mới nhất.")
 end
 

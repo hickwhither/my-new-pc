@@ -4,6 +4,24 @@ local Utils = _G.offlineservice("Utils")
 local Workspace = _G.services.Workspace
 local Players = _G.services.Players
 
+function Utils.getPrimaryPart(target)
+    if not target then
+        return nil
+    end
+
+    if target:IsA("BasePart") then
+        return target
+    end
+
+    if target:IsA("Model") then
+        return target.PrimaryPart
+            or target:FindFirstChild("ProxyPart", true)
+            or target:FindFirstChildWhichIsA("BasePart", true)
+    end
+
+    return nil
+end
+
 function Utils.safeDisconnectList(list)
     if not list then return end
     for _, c in ipairs(list) do
@@ -61,30 +79,11 @@ function Utils.teleportToTarget(targetObj)
 
     return false
 end
+function Utils.teleportToPosition(pos)
+    local player = Players.LocalPlayer
+    local root = player and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return false end
 
-
-function Utils.getRoomNumber(room)
-    local lights = room:WaitForChild("Lights", 10)
-    if not lights then return nil end
-
-    local nums = {}
-
-    for _, child in ipairs(lights:GetChildren()) do
-        if child.Name == "Sign" then
-            local sg = child:FindFirstChild("SurfaceGui")
-            local tl = sg and sg:FindFirstChild("TextLabel")
-            if tl then
-                local num = tonumber(tl.Text)
-                if num then
-                    table.insert(nums, num)
-                end
-            end
-        end
-    end
-    if #nums >= 2 then
-        return math.floor((nums[1] + nums[2]) / 2)
-    end
-
-    return nil
+    root.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
+    return true
 end
-

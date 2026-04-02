@@ -67,9 +67,10 @@ local function destroyFlightController()
             flightController.bodyVelocity:Destroy()
         end
 
-        if flightController.bodyGyro then
-            flightController.bodyGyro:Destroy()
-        end
+        -- Removed: bodyGyro destruction since it's no longer used
+        -- if flightController.bodyGyro then
+        --     flightController.bodyGyro:Destroy()
+        -- end
 
         if flightController.humanoid then
             flightController.humanoid.PlatformStand = false
@@ -127,7 +128,8 @@ local function updateFlightVelocity()
     end
 
     flightController.bodyVelocity.Velocity = moveVector
-    flightController.bodyGyro.CFrame = camera.CFrame
+    -- Removed: flightController.bodyGyro.CFrame = camera.CFrame
+    -- This prevents the player's waist from rotating with the camera, avoiding unwanted movement
 end
 
 local function stopFlight()
@@ -163,19 +165,20 @@ local function startFlight()
     bodyVelocity.Velocity = Vector3.zero
     bodyVelocity.Parent = rootPart
 
-    local bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.Name = "FlyBodyGyro"
-    bodyGyro.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
-    bodyGyro.P = 1e4
-    bodyGyro.CFrame = Workspace.CurrentCamera and Workspace.CurrentCamera.CFrame or rootPart.CFrame
-    bodyGyro.Parent = rootPart
+    -- Removed BodyGyro to prevent any rotation and unwanted movement
+    -- local bodyGyro = Instance.new("BodyGyro")
+    -- bodyGyro.Name = "FlyBodyGyro"
+    -- bodyGyro.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+    -- bodyGyro.P = 1e4
+    -- bodyGyro.CFrame = Workspace.CurrentCamera and Workspace.CurrentCamera.CFrame or rootPart.CFrame
+    -- bodyGyro.Parent = rootPart
 
     humanoid.PlatformStand = true
     humanoid:ChangeState(Enum.HumanoidStateType.Physics)
 
     flightController = {
         bodyVelocity = bodyVelocity,
-        bodyGyro = bodyGyro,
+        -- bodyGyro = bodyGyro,
         humanoid = humanoid,
         rootPart = rootPart,
     }

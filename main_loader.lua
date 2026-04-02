@@ -5,7 +5,7 @@ local baseUrl = "https://raw.githubusercontent.com/hickwhither/my-new-pc/refs/he
 local function fetch(name)
     local ok, res = pcall(function() return loadstring(game:HttpGet(baseUrl .. name))() end)
     if not ok then
-        warn("Lỗi tải module " .. name .. ": " .. tostring(res))
+        warn("Lỗi tải module " .. name .. ": " .. tostring(res))    
     end
     return res
 end
@@ -55,6 +55,7 @@ _G.config.DANGEROUS_ENTITY_NAMES = {
     ["Anglemonium"]=true,["Frogermonium"]=true,["Pinkimonium"]=true,
     ["Pandesmoker"]=true,["Blitzemonium"]=true,
     
+    ["WitchingHour"] = true,
     ["Carnation"] = true,
 }
 _G.config.DANGEROUS_DELETEABLE = {
@@ -63,6 +64,8 @@ _G.config.DANGEROUS_DELETEABLE = {
     ["Harbinger"]=true,
     ["Anglemonium"]=true,["Frogermonium"]=true,["Pinkimonium"]=true,
     ["Pandesmoker"]=true,["Blitzemonium"]=true,
+
+    ["WitchingHour"] = true,
 }
 
 fetch("Utils.lua")
@@ -76,5 +79,6 @@ fetch("mods/Noclip.lua")
 fetch("mods/Speedrun.lua")
 fetch("mods/Safe.lua")
 fetch("mods/Auto_Pickup.lua")
+fetch("mods/GuiMonsterKiller.lua")
 
 print("✅ Modules loaded from " .. baseUrl)
