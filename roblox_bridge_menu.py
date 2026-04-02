@@ -1,16 +1,19 @@
 import json
 import queue
 import threading
+import time
 from dataclasses import dataclass
 from pathlib import Path
-from flask import Flask, jsonify, request
+
+from flask import Flask, abort, jsonify, request, send_file
 import tkinter as tk
 from tkinter import ttk, messagebox
 
 
 HOST = "127.0.0.1"
 PORT = 8765
-KEYBIND_FILE = Path("keybinds.json")
+BASE_DIR = Path(__file__).resolve().parent
+KEYBIND_FILE = BASE_DIR / "keybinds.json"
 
 
 @dataclass
@@ -19,15 +22,16 @@ class MenuAction:
     label: str
     category: str
     roblox_event: str
+    is_toggle: bool = False
 
 
 ACTIONS: list[MenuAction] = [
-    MenuAction("farm_toggle", "Bật/Tắt Auto Farm", "Farm", "toggle_auto_farm"),
+    MenuAction("farm_toggle", "Bật/Tắt Auto Farm", "Farm", "toggle_auto_farm", True),
     MenuAction("farm_collect", "Thu thập vật phẩm", "Farm", "collect_items"),
     MenuAction("movement_speed", "Tăng tốc độ", "Movement", "boost_speed"),
-    MenuAction("movement_noclip", "Bật/Tắt Noclip", "Movement", "toggle_noclip"),
-    MenuAction("visual_fullbright", "Bật/Tắt Fullbright", "Visual", "toggle_fullbright"),
-    MenuAction("utility_safe", "Safe Mode", "Utility", "enable_safe_mode"),
+    MenuAction("movement_noclip", "Bật/Tắt Noclip", "Movement", "toggle_noclip", True),
+    MenuAction("visual_fullbright", "Bật/Tắt Fullbright", "Visual", "toggle_fullbright", True),
+    MenuAction("utility_safe", "Safe Mode", "Utility", "enable_safe_mode", True),
 ]
 
 
@@ -36,14 +40,21 @@ class RobloxBridgeMenu:
         self.app = Flask(__name__)
         self.root = tk.Tk()
         self.root.title("Roblox External Menu Bridge")
-        self.root.geometry("700x460")
+        self.root.geometry("760x500")
 
         self.trigger_queue: queue.Queue[str] = queue.Queue()
         self.keybind_vars: dict[str, tk.StringVar] = {}
-        self.action_buttons: dict[str, ttk.Button] = {}
         self.last_action_var = tk.StringVar(value="Chưa có hành động nào.")
 
+        self.actions_by_id = {action.action_id: action for action in ACTIONS}
+        self.toggle_state = {action.action_id: False for action in ACTIONS if action.is_toggle}
+
         self.keybinds = self._load_keybinds()
+
+        self.changes_lock = threading.Lock()
+        self.next_change_id = 1
+        self.change_log: list[dict] = []
+
         self._setup_flask_routes()
         self._build_ui()
 
@@ -63,42 +74,102 @@ class RobloxBridgeMenu:
                     "label": action.label,
                     "category": action.category,
                     "roblox_event": action.roblox_event,
+                    "is_toggle": action.is_toggle,
                     "keybind": self.keybinds.get(action.action_id, ""),
                 }
                 for action in ACTIONS
             ]
             return jsonify(payload)
 
+        @self.app.get("/src/<path:filepath>")
+        def src_file(filepath: str):
+            file_path = (BASE_DIR / filepath).resolve()
+            if BASE_DIR not in file_path.parents and file_path != BASE_DIR:
+                abort(403)
+            if file_path.suffix.lower() != ".lua" or not file_path.is_file():
+                abort(404)
+            return send_file(file_path, mimetype="text/plain")
+
+        @self.app.get("/trigger")
+        def trigger_from_query():
+            action_id = (request.args.get("action_id") or "").strip()
+            return self._queue_action_from_client(action_id, source="http:get")
+
         @self.app.post("/trigger")
-        def trigger_action():
+        def trigger_from_post():
             data = request.get_json(silent=True) or {}
-            action_id = data.get("action_id")
+            action_id = (data.get("action_id") or "").strip()
+            return self._queue_action_from_client(action_id, source="http:post")
 
-            if not action_id:
-                return jsonify({"status": "error", "message": "missing action_id"}), 400
+        @self.app.get("/set_keybind")
+        def set_keybind_from_query():
+            action_id = (request.args.get("action_id") or "").strip()
+            key = (request.args.get("key") or "").strip().lower()
+            return self._set_keybind(action_id, key, source="http:query")
 
-            if action_id not in {a.action_id for a in ACTIONS}:
-                return jsonify({"status": "error", "message": f"unknown action_id: {action_id}"}), 404
+        @self.app.get("/changes")
+        def get_changes():
+            since = request.args.get("since", default="0")
+            try:
+                since_id = int(since)
+            except ValueError:
+                return jsonify({"status": "error", "message": "since must be integer"}), 400
 
-            self.trigger_queue.put(action_id)
-            return jsonify({"status": "ok", "queued_action": action_id})
+            with self.changes_lock:
+                updates = [entry for entry in self.change_log if entry["id"] > since_id]
+                latest = self.next_change_id - 1
 
-        @self.app.get("/keybinds")
-        def get_keybinds():
-            return jsonify(self.keybinds)
+            return jsonify({"status": "ok", "since": since_id, "latest": latest, "changes": updates})
 
-        @self.app.post("/keybinds")
-        def save_keybind():
-            data = request.get_json(silent=True) or {}
-            action_id = data.get("action_id")
-            key = (data.get("key") or "").strip().lower()
+    def _queue_action_from_client(self, action_id: str, source: str):
+        if not action_id:
+            return jsonify({"status": "error", "message": "missing action_id"}), 400
+        if action_id not in self.actions_by_id:
+            return jsonify({"status": "error", "message": f"unknown action_id: {action_id}"}), 404
 
-            if action_id not in {a.action_id for a in ACTIONS}:
-                return jsonify({"status": "error", "message": "action_id không hợp lệ"}), 400
+        self.trigger_queue.put((action_id, source))
+        self._record_change(
+            change_type="queued",
+            action_id=action_id,
+            payload={"source": source},
+        )
+        return jsonify({"status": "ok", "queued_action": action_id})
 
-            self.keybinds[action_id] = key
-            self._save_keybinds(self.keybinds)
-            return jsonify({"status": "ok", "action_id": action_id, "key": key})
+    def _set_keybind(self, action_id: str, key: str, source: str):
+        if action_id not in self.actions_by_id:
+            return jsonify({"status": "error", "message": "action_id không hợp lệ"}), 400
+
+        self.keybinds[action_id] = key
+        self._save_keybinds(self.keybinds)
+
+        self._record_change(
+            change_type="keybind",
+            action_id=action_id,
+            payload={"key": key, "source": source},
+        )
+
+        if action_id in self.keybind_vars:
+            self.keybind_vars[action_id].set(key)
+
+        return jsonify({"status": "ok", "action_id": action_id, "key": key})
+
+    def _record_change(self, change_type: str, action_id: str, payload: dict | None = None) -> None:
+        payload = payload or {}
+        with self.changes_lock:
+            change_id = self.next_change_id
+            self.next_change_id += 1
+            self.change_log.append(
+                {
+                    "id": change_id,
+                    "type": change_type,
+                    "action_id": action_id,
+                    "payload": payload,
+                    "ts": int(time.time()),
+                }
+            )
+
+            if len(self.change_log) > 1000:
+                self.change_log = self.change_log[-500:]
 
     def _build_ui(self) -> None:
         wrapper = ttk.Frame(self.root, padding=12)
@@ -114,8 +185,8 @@ class RobloxBridgeMenu:
         hint = ttk.Label(
             wrapper,
             text=(
-                f"Flask API đang chạy tại http://{HOST}:{PORT}. "
-                "Mỗi nút có ô bên cạnh để gán keybind."
+                f"API: http://{HOST}:{PORT} | Client đọc thay đổi bằng /changes?since=<id> "
+                "và cập nhật keybind bằng /set_keybind?action_id=...&key=..."
             ),
         )
         hint.pack(anchor="w", pady=(0, 8))
@@ -144,7 +215,6 @@ class RobloxBridgeMenu:
                 width=30,
             )
             action_button.grid(row=row, column=0, padx=(0, 8), pady=5, sticky="w")
-            self.action_buttons[action.action_id] = action_button
 
             keybind_var = tk.StringVar(value=self.keybinds.get(action.action_id, ""))
             self.keybind_vars[action.action_id] = keybind_var
@@ -164,8 +234,10 @@ class RobloxBridgeMenu:
 
     def _save_single_keybind(self, action_id: str) -> None:
         key = self.keybind_vars[action_id].get().strip().lower()
-        self.keybinds[action_id] = key
-        self._save_keybinds(self.keybinds)
+        result = self._set_keybind(action_id, key, source="gui")
+        if isinstance(result, tuple):
+            self.last_action_var.set("Không lưu được keybind.")
+            return
         self.last_action_var.set(f"Đã lưu keybind [{key or 'none'}] cho {action_id}.")
 
     def _on_keypress(self, event: tk.Event) -> None:
@@ -179,21 +251,36 @@ class RobloxBridgeMenu:
                 break
 
     def _execute_action(self, action_id: str, source: str) -> None:
-        action = next((a for a in ACTIONS if a.action_id == action_id), None)
+        action = self.actions_by_id.get(action_id)
         if action is None:
             return
 
+        state = None
+        if action.is_toggle:
+            state = not self.toggle_state[action_id]
+            self.toggle_state[action_id] = state
+
+        self._record_change(
+            change_type="action",
+            action_id=action_id,
+            payload={"source": source, "active": state, "event": action.roblox_event},
+        )
+
+        state_msg = ""
+        if state is not None:
+            state_msg = f" (active={state})"
+
         self.last_action_var.set(
-            f"Đã kích hoạt '{action.label}' từ {source}. Roblox event='{action.roblox_event}'."
+            f"Đã kích hoạt '{action.label}' từ {source}. Roblox event='{action.roblox_event}'{state_msg}."
         )
 
     def _process_queue(self) -> None:
         while True:
             try:
-                action_id = self.trigger_queue.get_nowait()
+                action_id, source = self.trigger_queue.get_nowait()
             except queue.Empty:
                 break
-            self._execute_action(action_id, source="flask")
+            self._execute_action(action_id, source=source)
 
         self.root.after(100, self._process_queue)
 
@@ -214,10 +301,7 @@ class RobloxBridgeMenu:
         return {}
 
     def _save_keybinds(self, data: dict[str, str]) -> None:
-        KEYBIND_FILE.write_text(
-            json.dumps(data, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        KEYBIND_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
     def _on_close(self) -> None:
         if messagebox.askokcancel("Thoát", "Bạn có chắc muốn đóng menu?"):
