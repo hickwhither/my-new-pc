@@ -285,10 +285,10 @@ local function killBtnEvent()
 end
 local killBtn = makeDefaultButton("DỪNG SCRIPT", Color3.fromRGB(120, 0, 0), killBtnEvent)
 
--- backquote; Ctrl+backquote => kill
+-- RightShift; Ctrl+RightShift => kill
 local inputConn = UIS.InputBegan:Connect(function(input, gpe)
     if gpe then return end
-    if input.KeyCode == Enum.KeyCode.Backquote then
+    if input.KeyCode == Enum.KeyCode.RightShift then
         if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
             killBtnEvent()
         else
