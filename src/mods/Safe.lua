@@ -7,7 +7,6 @@ local Player = _G.services.Players.LocalPlayer
 _G.state.settings.safeHeightEnabled = false
 _G.state.settings.deleteClientsidedNodeEnabled = false
 
-_G.UI.createButton("safeHeightEnabled")
 _G.UI.createButton("deleteClientsidedNodeEnabled")
 
 _G.UI.addEventHandler("safeHeightEnabled", function(enabled)
@@ -126,4 +125,3 @@ heartbeatConn = RunService.Heartbeat:Connect(function()
 end)
 
 table.insert(_G.state.connections, heartbeatConn)
-

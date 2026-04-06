@@ -9,7 +9,6 @@ local connections = {}
 -- UI REGISTER (giữ nguyên style của bạn)
 --------------------------------------------------
 _G.state.settings.Fullbright = false
-_G.UI.createButton("Fullbright", Color3.fromRGB(0, 170, 255))
 _G.UI.addEventHandler("Fullbright", function(state)
     Fullbright.toggle(state)
 end)
@@ -106,4 +105,3 @@ function Fullbright.toggle(enable)
         end
     end
 end
-
