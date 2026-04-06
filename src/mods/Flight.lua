@@ -46,7 +46,6 @@ end)
 _G.UI.addStopHandler(function()
     _G.state.settings.Flight = false
     Flight:toggle(false)
-    script:Destroy()
 end)
 
 -- Main

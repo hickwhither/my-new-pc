@@ -22,7 +22,6 @@ end)
 _G.UI.addStopHandler(function()
     _G.state.settings.Noclip = false
     Noclip:toggle(false)
-    script:Destroy()
 end)
 
 -- Main Functions

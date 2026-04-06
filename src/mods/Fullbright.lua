@@ -19,8 +19,6 @@ _G.UI.addStopHandler(function()
             Fullbright.toggle(false)
         end)
     end
-    
-    script:Destroy()
 end)
 
 --------------------------------------------------

@@ -17,8 +17,6 @@ _G.UI.addStopHandler(function()
             Auto_Pickup.toggle(false)
         end)
     end
-    
-    script:Destroy()
 end)
 
 --------------------------------------------------
