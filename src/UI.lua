@@ -27,6 +27,7 @@ UI.categories = {}         -- category -> {row1, row2, ...}
 UI.categoryFrames = {}     -- category -> section frame
 UI.keybinds = {}           -- name -> Enum.KeyCode
 UI.captureBindFor = nil    -- current button waiting for keybind
+UI.actions = {}            -- name -> action function
 
 local DEFAULT_CATEGORY_ORDER = {
     "SYSTEM",
@@ -326,6 +327,7 @@ function UI.createButton(name, color, category)
         end
     end
 
+    UI.actions[name] = runButtonAction
     btn.MouseButton1Click:Connect(runButtonAction)
 
     bindBtn.MouseButton1Click:Connect(function()
@@ -488,9 +490,9 @@ end
 local function triggerByKeybind(input)
     for name, keyCode in pairs(UI.keybinds) do
         if keyCode == input.KeyCode then
-            local button = UI.buttons[name]
-            if button then
-                button:Activate()
+            local action = UI.actions[name]
+            if action then
+                action()
             end
             break
         end
@@ -508,7 +510,11 @@ local inputConn = UIS.InputBegan:Connect(function(input, gpe)
         if input.KeyCode == Enum.KeyCode.Backspace or input.KeyCode == Enum.KeyCode.Delete then
             UI.keybinds[targetName] = nil
         elseif input.KeyCode ~= Enum.KeyCode.Unknown then
-            UI.keybinds[targetName] = input.KeyCode
+            if UI.keybinds[targetName] == input.KeyCode then
+                UI.keybinds[targetName] = nil
+            else
+                UI.keybinds[targetName] = input.KeyCode
+            end
         end
 
         refreshBindLabel(targetName)
