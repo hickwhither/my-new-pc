@@ -21,7 +21,7 @@ _G.UI.addEventHandler(ENABLED_KEY, function(enabled)
 end)
 _G.UI.addStopHandler(function()
     _G.state.settings.Noclip = false
-    Noclip:toggle(false)
+    Noclip:disable()
 end)
 
 -- Main Functions
@@ -78,4 +78,13 @@ function Noclip:disable()
     end
 
     restoreOriginalStates()
+end
+
+function Noclip:toggle(enabled)
+    _G.state.settings.Noclip = enabled
+    if enabled then
+        self:enable()
+    else
+        self:disable()
+    end
 end
