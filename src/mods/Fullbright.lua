@@ -14,7 +14,7 @@ _G.UI.addEventHandler("Fullbright", function(state)
     Fullbright.toggle(state)
 end)
 _G.UI.addStopHandler(function()
-    if _G.state.settings.FullBright then
+    if _G.state.settings.Fullbright then
         pcall(function()
             Fullbright.toggle(false)
         end)
@@ -64,7 +64,7 @@ local function connectLocks()
 
     for _, prop in ipairs(props) do
         local conn = Lighting:GetPropertyChangedSignal(prop):Connect(function()
-            if _G.state.settings.FullBright then
+            if _G.state.settings.Fullbright then
                 applyFullbright()
             end
         end)
