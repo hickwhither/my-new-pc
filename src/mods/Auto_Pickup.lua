@@ -7,7 +7,7 @@ local connections = {}
 -- UI REGISTER (giữ nguyên style của bạn)
 --------------------------------------------------
 _G.state.settings.AutoPickup = false
-_G.UI.createButton("AutoPickup", Color3.fromRGB(255, 215, 0))  -- Màu vàng cho item pickup
+_G.UI.createButton("AutoPickup", Color3.fromRGB(255, 215, 0), "AUTO")  -- Màu vàng cho item pickup
 _G.UI.addEventHandler("AutoPickup", function(state)
     Auto_Pickup.toggle(state)
 end)

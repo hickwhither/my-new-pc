@@ -6,7 +6,7 @@ local Workspace = game:GetService("Workspace")
 
 -- UI Register
 _G.state.settings.Speedrun = false
-_G.UI.createButton("Speedrun")
+_G.UI.createButton("Speedrun", Color3.new(0.129411, 0, 0.490196), "AUTO")
 
 _G.UI.addEventHandler("Speedrun", function(enabled)
     _G.state.settings.Speedrun = enabled

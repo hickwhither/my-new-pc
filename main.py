@@ -7,7 +7,6 @@ from threading import Lock
 app = Flask(__name__)
 settings_lock = Lock()
 
-
 def to_lua(value):
     if isinstance(value, dict):
         items = []
@@ -24,10 +23,6 @@ def to_lua(value):
     if isinstance(value, str):
         return json.dumps(value)
     return str(value)
-
-@app.route('/')
-def index():
-    return send_file('index.html')
 
 @app.route('/settings.lua')
 def settings_lua():
@@ -84,3 +79,11 @@ def apply_settings_action(data):
 
     save_settings_file(current)
     return current
+
+@app.route('/')
+def index():
+    return r"""
+_G.BRIDGE_BASE_URL = 'http://127.0.0.1:5000'
+loadstring(game:HttpGet("http://127.0.0.1:5000/src/main.lua"))()
+""".strip()
+app.run('0.0.0.0', 5000, True)

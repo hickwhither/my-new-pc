@@ -29,19 +29,16 @@ UI.keybinds = {}           -- name -> Enum.KeyCode
 UI.captureBindFor = nil    -- current button waiting for keybind
 
 local DEFAULT_CATEGORY_ORDER = {
-    "MOVEMENT",
-    "WORLD",
-    "VISUAL",
-    "UTILITY",
     "SYSTEM",
-    "MISC",
+    "BASIC",
+    "VISUAL",
+    "AUTO",
 }
 
 local CATEGORY_RULES = {
-    { category = "MOVEMENT", patterns = { "speed", "noclip", "flight", "jump", "run" } },
+    { category = "BASIC", patterns = { "speed", "noclip", "flight", "jump", "run" } },
     { category = "WORLD", patterns = { "pickup", "node", "safe", "farm", "monster", "kill" } },
     { category = "VISUAL", patterns = { "bright", "visual", "esp", "shader" } },
-    { category = "UTILITY", patterns = { "auto", "macro", "script", "service", "warn" } },
 }
 
 local function normalizeCategory(category)
@@ -297,10 +294,11 @@ function UI.createButton(name, color, category)
         end
     end
 
+    color = color or Color3.fromRGB(40, 170, 70)
     local function getColor()
         if isToggle then
             return _G.state.settings[name]
-                and Color3.fromRGB(40, 170, 70)
+                and color
                 or Color3.fromRGB(50, 50, 50)
         else
             return color or Color3.fromRGB(50, 50, 50)
