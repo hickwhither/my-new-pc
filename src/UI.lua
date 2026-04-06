@@ -476,7 +476,30 @@ local function killBtnEvent()
     print("✅ Script đã dừng (UI requested).")
 end
 
-UI.createButton("DỪNG SCRIPT", Color3.fromRGB(120, 0, 0), "SYSTEM")
+local CORE_BUTTONS = {
+    SYSTEM = {
+        { name = "DỪNG SCRIPT", color = Color3.fromRGB(120, 0, 0), toggle = false },
+    },
+    BASIC = {
+        { name = "Flight", toggle = true },
+        { name = "Noclip", toggle = true },
+        { name = "Speed", toggle = true },
+        { name = "safeHeightEnabled", toggle = true },
+    },
+    VISUAL = {
+        { name = "Fullbright", color = Color3.fromRGB(0, 170, 255), toggle = true },
+    },
+}
+
+for _, category in ipairs({ "SYSTEM", "BASIC", "VISUAL" }) do
+    for _, buttonDef in ipairs(CORE_BUTTONS[category]) do
+        if buttonDef.toggle and _G.state.settings[buttonDef.name] == nil then
+            _G.state.settings[buttonDef.name] = false
+        end
+        UI.createButton(buttonDef.name, buttonDef.color, category)
+    end
+end
+
 UI.addEventHandler("DỪNG SCRIPT", killBtnEvent)
 
 local function refreshBindLabel(name)

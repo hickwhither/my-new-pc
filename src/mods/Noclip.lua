@@ -11,7 +11,6 @@ local originalCollisionStates = {}
 
 -- UI Register
 _G.state.settings.Noclip = false
-_G.UI.createButton(ENABLED_KEY)
 _G.UI.addEventHandler(ENABLED_KEY, function(enabled)
     if enabled then
         Noclip:enable()

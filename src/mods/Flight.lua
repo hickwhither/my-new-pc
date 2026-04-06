@@ -36,7 +36,6 @@ local movementKeys = {
 
 -- UI Register
 _G.state.settings.Flight = false
-_G.UI.createButton("Flight")
 
 _G.UI.addEventHandler("Flight", function(enabled)
     _G.state.settings.Flight = enabled -- Keep state synced

@@ -107,7 +107,6 @@ function SpeedService:destroy()
 end
 
 -- UI Register
-_G.UI.createButton(ENABLED_KEY)
 _G.UI.addEventHandler(ENABLED_KEY, function(enabled)
     SpeedService:toggle(enabled)
 end)
